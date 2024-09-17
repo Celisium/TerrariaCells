@@ -134,7 +134,7 @@ class GenerateRoomsPass : GenPass
         }
 
         // Set world surface height.
-        //Main.worldSurface = Main.maxTilesY * 0.17; // TODO: This is just temporary to silence some errors. // no errors anymore, will comment out for now
+        Main.worldSurface = Main.maxTilesY * 0.17; // TODO: This is just temporary to silence some errors.
 
         Utils.GlobalPlayer.isBuilder = true;
 
@@ -212,7 +212,7 @@ class GenerateRoomsPass : GenPass
             for (int i = 0; i < room.Room.Width; i++)
             {
                 //top
-                if (!Terraria.WorldGen.TileEmpty(roomPos.X + i, roomPos.Y) & !room.Room.IsSurface)
+                if (!Terraria.WorldGen.TileEmpty(roomPos.X + i, roomPos.Y) & !room.Room.Config.Surface)
                 {
                     tiles.Enqueue((new Point(roomPos.X + i, roomPos.Y), new Point(roomPos.X + i, roomPos.Y - 1),
                         depth));
@@ -227,7 +227,7 @@ class GenerateRoomsPass : GenPass
             }
 
             //iterate through left&right side tiles
-            if (!room.Room.IsSurface)
+            if (!room.Room.Config.Surface)
             {
                 for (int i = 0; i < room.Room.Height; i++)
                 {

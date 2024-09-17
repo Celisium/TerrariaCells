@@ -25,7 +25,7 @@ internal class PlacedRoom
     {
         var roomRect = new Rectangle(this.Position.X, this.Position.Y, this.Room.Width, this.Room.Height);
 
-        if (this.Room.IsSurface)
+        if (this.Room.Config.Surface)
         {
             roomRect.Y = -(2 << 16);
             roomRect.Height += (2 << 16) + this.Position.Y;
@@ -39,7 +39,7 @@ internal class PlacedRoom
 
             // TODO: This is a hack which extends the clearance of surface connections to (effectively) the top
             //       of the world, like what is done for the room rectangles.
-            if (this.Room.IsSurface && conn.Connection.Length == 1)
+            if (this.Room.Config.Surface && conn.Connection.Length == 1)
             {
                 clearanceRect.Height = clearanceRect.Y + (2 << 16);
                 clearanceRect.Y = -(2 << 16);

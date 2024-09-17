@@ -4,6 +4,8 @@ using Terraria.ModLoader;
 using Terraria.ID;
 using Terraria.ModLoader.IO;
 using TerrariaCells.Content.Tiles;
+using System.IO;
+using System.Text.Json;
 
 namespace TerrariaCells.WorldGen
 {
@@ -42,6 +44,8 @@ namespace TerrariaCells.WorldGen
 	internal class Room
 	{
 		public const string RoomPrefix = "WorldGen/Rooms/";
+		public const string RoomConfigPrefix = "WorldGen/RoomConfigs/";
+
 		public static readonly string[] Biomes = ["Pyramid", "Test"];
 
 		public static readonly string[] RoomNames = [
@@ -120,7 +124,7 @@ namespace TerrariaCells.WorldGen
 		public int Width { get; private set; }
 		public int Height { get; private set; }
 
-		public bool IsSurface { get; private set; } = false;
+		public RoomConfig Config { get; private set; } = new RoomConfig();
 
 		private static bool IsConnector(IList<TagCompound> data, int width, int height, int x, int y, Mod mod)
 		{
@@ -147,17 +151,35 @@ namespace TerrariaCells.WorldGen
 			tileTag.Set("WallWireData", wallWireData, true);
 		}
 
-		public Room(string path, Mod mod)
+		private static readonly JsonSerializerOptions jsonSerializerOptions = new() {
+			PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+		};
+
+		public Room(string name, Mod mod)
 		{
 
-			using (var stream = mod.GetFileStream(path))
+			if (mod.FileExists(RoomConfigPrefix + name + ".json")) {
+				using (var stream = mod.GetFileStream(RoomConfigPrefix + name + ".json")) {
+					try {
+						this.Config = JsonSerializer.Deserialize<RoomConfig>(stream, jsonSerializerOptions);
+					} catch (JsonException e) {
+						// If an error occurs while reading the JSON file, log a message and use the default instead.
+						mod.Logger.Error($"Error loading configuration file for room {name}: {e.Message}");
+					}
+				}
+			} else {
+				// If no config is found, just use the default.
+				mod.Logger.Warn($"No configuration file found for room {name}.");
+			}
+
+			using (var stream = mod.GetFileStream(RoomPrefix + name))
 			{
 				this.Tag = TagIO.FromStream(stream);
 			}
 
 			if (this.Tag == null)
 			{
-				throw new Exception($"unable to load structure file ${path}");
+				throw new Exception($"unable to load structure file ${name}");
 			}
 
 			var data = this.Tag.GetList<TagCompound>("TileData");
@@ -166,8 +188,6 @@ namespace TerrariaCells.WorldGen
 
 			this.Width = width;
 			this.Height = height;
-
-			this.IsSurface = this.Tag.GetBool("Surface");
 
 			// Check for connections at the top.
 			int x = 0;
@@ -294,7 +314,7 @@ namespace TerrariaCells.WorldGen
 		{
 			foreach (var name in RoomNames)
 			{
-				Rooms.Add(new Room(RoomPrefix + name, mod));
+				Rooms.Add(new Room(name, mod));
 			}
 		}
 	}
